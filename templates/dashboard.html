@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CRYPTAX | Strategic Oversight Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --p: #00f3ff; /* Neon Cyan */
+            --s: #bc13fe; /* Neon Purple */
+            --bg: #050508;
+            --card-bg: rgba(10, 10, 15, 0.9);
+            --border: rgba(0, 243, 255, 0.2);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            background: var(--bg); 
+            color: #fff; 
+            font-family: 'JetBrains Mono', monospace; 
+            height: 100vh; 
+            overflow: hidden;
+            background-image: radial-gradient(circle at 50% 50%, #0a0a1f 0%, #050508 100%);
+        }
+
+        /* --- LOGIN SCREEN --- */
+        .overlay { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .hidden { display: none !important; }
+
+        .auth-box {
+            background: var(--card-bg);
+            border: 1px solid var(--p);
+            padding: 50px;
+            text-align: center;
+            box-shadow: 0 0 50px rgba(0, 243, 255, 0.1);
+            position: relative;
+        }
+        .auth-box::before { content: 'SECURE_LINK_REQUIRED'; position: absolute; top: -10px; left: 20px; background: var(--p); color: #000; font-size: 10px; padding: 2px 8px; font-family: 'Orbitron'; }
+
+        input[type="password"] {
+            background: #000; border: 1px solid #333; color: var(--p);
+            padding: 15px; width: 300px; text-align: center; font-family: 'Orbitron';
+            letter-spacing: 5px; margin-bottom: 20px; outline: none;
+        }
+        input:focus { border-color: var(--p); box-shadow: 0 0 15px var(--p); }
+
+        .btn-auth {
+            background: transparent; border: 1px solid var(--p); color: var(--p);
+            padding: 12px 30px; font-family: 'Orbitron'; font-weight: bold; cursor: pointer;
+            transition: 0.3s;
+        }
+        .btn-auth:hover { background: var(--p); color: #000; box-shadow: 0 0 20px var(--p); }
+
+        /* --- DASHBOARD LAYOUT --- */
+        .wrapper { display: flex; flex-direction: column; height: 100vh; padding: 20px; gap: 20px; }
+
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 25px; border: 1px solid var(--border); background: var(--card-bg);
+        }
+        .logo { font-family: 'Orbitron'; font-weight: 900; color: var(--p); font-size: 1.5rem; letter-spacing: 3px; }
+        .live-timer { color: var(--s); font-family: 'Orbitron'; font-size: 0.9rem; }
+
+        .main-grid { display: grid; grid-template-columns: 350px 1fr; gap: 20px; flex: 1; min-height: 0; }
+
+        .side-panel, .monitor-panel {
+            background: var(--card-bg); border: 1px solid var(--border);
+            display: flex; flex-direction: column; overflow: hidden;
+        }
+
+        .panel-header {
+            background: rgba(0, 243, 255, 0.05); padding: 12px 20px;
+            border-bottom: 1px solid var(--border); font-family: 'Orbitron';
+            font-size: 0.8rem; color: var(--p); letter-spacing: 1px;
+            display: flex; justify-content: space-between;
+        }
+
+        /* --- NODE LIST --- */
+        #node-list { flex: 1; overflow-y: auto; padding: 15px; }
+        .node-card {
+            padding: 15px; border: 1px solid #1a1a1a; margin-bottom: 10px;
+            cursor: pointer; transition: 0.3s; position: relative;
+        }
+        .node-card:hover { border-color: var(--p); background: rgba(0, 243, 255, 0.03); }
+        .node-card.active { border-color: var(--s); background: rgba(188, 19, 254, 0.05); }
+        .node-card .id { color: var(--p); font-weight: bold; }
+        .node-card .meta { font-size: 10px; color: #555; margin-top: 5px; }
+
+        /* --- MESSAGE MONITOR --- */
+        #messages-container { flex: 1; overflow-y: auto; padding: 25px; display: flex; flex-direction: column; gap: 15px; }
+        
+        .intercept-box {
+            background: #08080a; border: 1px solid #151515; padding: 18px;
+            position: relative; transition: 0.4s;
+        }
+        .intercept-box:hover { border-color: #333; }
+        .intercept-box.decrypted { border-color: var(--s); background: rgba(188, 19, 254, 0.02); }
+
+        .sender-tag { font-size: 10px; color: var(--s); font-family: 'Orbitron'; margin-bottom: 8px; display: block; }
+        .cover-text { color: #666; font-size: 0.95rem; }
+        
+        .original-text {
+            margin-top: 15px; padding-top: 10px; border-top: 1px dashed #333;
+            color: #fff; font-weight: bold; display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .btn-decrypt-admin {
+            position: absolute; top: 15px; right: 15px;
+            background: transparent; border: 1px solid var(--p); color: var(--p);
+            font-size: 10px; padding: 4px 8px; cursor: pointer; font-family: 'Orbitron';
+        }
+        .btn-decrypt-admin:hover { background: var(--p); color: #000; }
+
+        /* --- FOOTER STATS --- */
+        footer {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+        }
+        .stat-card {
+            background: var(--card-bg); border: 1px solid var(--border);
+            padding: 15px; text-align: center;
+        }
+        .stat-label { font-size: 10px; color: #555; font-family: 'Orbitron'; margin-bottom: 5px; }
+        .stat-value { font-size: 1.2rem; font-weight: bold; color: var(--p); font-family: 'Orbitron'; }
+
+        /* --- ANIMATIONS --- */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+        .scanline {
+            width: 100%; height: 2px; background: rgba(0, 243, 255, 0.1);
+            position: absolute; top: 0; animation: scan 4s linear infinite; pointer-events: none;
+        }
+        @keyframes scan { from { top: 0; } to { top: 100%; } }
+    </style>
+</head>
+<body>
+
+    <div id="layer-auth" class="overlay">
+        <div class="auth-box">
+            <h1 style="font-family:'Orbitron'; color:var(--p); margin-bottom:30px; letter-spacing:5px;">MASTER OVERSEER</h1>
+            <input type="password" id="m-pass" placeholder="ENTER MASTER KEY">
+            <br>
+            <button class="btn-auth" onclick="initDash()">ESTABLISH CONNECTION</button>
+        </div>
+    </div>
+
+    <div id="main-dash" class="wrapper hidden">
+        <header>
+            <div class="logo"><i class="fa-solid fa-shield-virus"></i> CRYPTAX OVERSEER</div>
+            <div class="live-timer" id="live-time">00:00:00</div>
+        </header>
+
+        <div class="main-grid">
+            <div class="side-panel">
+                <div class="panel-header">
+                    <span>ACTIVE_NODES</span>
+                    <i class="fa-solid fa-network-wired"></i>
+                </div>
+                <div id="node-list">
+                    </div>
+            </div>
+
+            <div class="monitor-panel">
+                <div class="panel-header">
+                    <span>COMMUNICATION_INTERCEPTOR</span>
+                    <span id="active-node-display" style="color:var(--s)">NO_NODE_SELECTED</span>
+                </div>
+                <div class="scanline"></div>
+                <div id="messages-container">
+                    <div style="text-align:center; color:#333; margin-top:100px;">
+                        <i class="fa-solid fa-satellite-dish" style="font-size:3rem; margin-bottom:20px;"></i>
+                        <p>AWAITING DATA PACKET SELECTION...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <div class="stat-card">
+                <div class="stat-label">SYSTEM_STATUS</div>
+                <div class="stat-value" style="color:#00ff00;">OPERATIONAL</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">TOTAL_ACTIVE_NODES</div>
+                <div class="stat-value" id="node-count">0</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">TOTAL_CONNECTED_OPERATORS</div>
+                <div class="stat-value" id="user-count">0</div>
+            </div>
+        </footer>
+    </div>
+
+    <script>
+        let globalData = null;
+
+        async function initDash() {
+            const pass = document.getElementById('m-pass').value;
+            const res = await fetch('/get_admin_data', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ password: pass })
+            });
+
+            if (res.ok) {
+                globalData = await res.json();
+                document.getElementById('layer-auth').classList.add('hidden');
+                document.getElementById('main-dash').classList.remove('hidden');
+                renderUI();
+            } else {
+                alert("CRITICAL ERROR: MASTER KEY INVALID");
+            }
+        }
+
+        function renderUI() {
+            document.getElementById('user-count').innerText = globalData.total_active || 0;
+            const rooms = Object.keys(globalData.chats);
+            document.getElementById('node-count').innerText = rooms.length;
+
+            const list = document.getElementById('node-list');
+            list.innerHTML = "";
+            rooms.forEach(rid => {
+                list.innerHTML += `
+                    <div class="node-card" onclick="selectNode('${rid}', this)">
+                        <div class="id">NODE_${rid}</div>
+                        <div class="meta">${globalData.chats[rid].length} PACKETS CAPTURED</div>
+                    </div>`;
+            });
+        }
+
+        function selectNode(rid, element) {
+            // UI Toggle
+            document.querySelectorAll('.node-card').forEach(el => el.classList.remove('active'));
+            element.classList.add('active');
+            document.getElementById('active-node-display').innerText = "MONITORING_NODE_" + rid;
+
+            const container = document.getElementById('messages-container');
+            container.innerHTML = "";
+
+            globalData.chats[rid].forEach(m => {
+                container.innerHTML += `
+                    <div class="intercept-box" id="msg-${rid}-${m.id}">
+                        <button class="btn-decrypt-admin" onclick="adminDecrypt('${rid}', ${m.id})">DECRYPT</button>
+                        <span class="sender-tag">OPERATOR: ${m.sender}</span>
+                        <div class="cover-text">${m.story}</div>
+                        <div class="original-text"></div>
+                    </div>`;
+            });
+        }
+
+        async function adminDecrypt(rid, mid) {
+            const p = prompt("ENTER DECRYPTION OVERRIDE (11):");
+            if(p !== "11") return;
+
+            const res = await fetch('/decrypt', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ room_id: rid, msg_id: mid, password: p })
+            });
+            const d = await res.json();
+            
+            if(d.original) {
+                const box = document.getElementById(`msg-${rid}-${mid}`);
+                box.classList.add('decrypted');
+                const originalDiv = box.querySelector('.original-text');
+                originalDiv.innerHTML = `<i class="fa-solid fa-unlock" style="margin-right:10px; color:var(--s)"></i> ${d.original}`;
+                originalDiv.style.display = "block";
+                box.querySelector('.btn-decrypt-admin').style.display = "none";
+            }
+        }
+
+        // Live Clock
+        setInterval(() => {
+            document.getElementById('live-time').innerText = new Date().toLocaleTimeString();
+        }, 1000);
+    </script>
+</body>
+</html>
