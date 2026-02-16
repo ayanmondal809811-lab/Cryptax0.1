@@ -17,9 +17,24 @@ story_tracker = {}
 active_users = {} 
 
 COVER_STORIES = [
-    "Did you see the notes for the exam?", "I think we should study the third chapter first.",
-    "The weather is quite nice today.", "Do you have the link for the online class?",
-    "History projects are time-consuming.", "Let's meet at the library around 5 PM."
+    "Did you see the professor's email about the deadline?",
+    "Yeah, pushed to next Tuesday right?",
+    "Exactly. We still need to finish the bibliography though.",
+    "I can handle the citations if you do the intro.",
+    "Deal. I found some good sources on J-STOR.",
+    "Send them over when you can, please.",
+    "Will do. Also, are we meeting tomorrow?",
+    "Depends on if I finish my part by then.",
+    "Fair enough. Let's aim for 6 PM just in case.",
+    "Sounds like a plan. Did you fix that formatting error?",
+    "Not yet, Word is crashing on my laptop.",
+    "Try using Google Docs, it's easier for collaboration.",
+    "Good idea. I'll move the text over tonight.",
+    "Perfect. I'll review it in the morning.",
+    "Thanks. This project is stressing me out lol.",
+    "Tell me about it. We're almost done though.",
+    "True. Just one last push.",
+    "Alright, talking to you later."
 ]
 
 @app.route('/')
